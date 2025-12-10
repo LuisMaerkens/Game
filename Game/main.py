@@ -6,6 +6,9 @@ import json
 import os
 import math
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
 # ---- INIT ----
 pygame.init()
 pygame.mixer.init()
@@ -33,8 +36,8 @@ player_speed = 6
 slow_speed = 3
 item_size = 50
 obstacle_size = 50
-highscore_file = "Game/highscore.json"
-achievements_file = "Game/achievements.json"
+highscore_file = os.path.join(BASE_DIR, "highscore.json")
+achievements_file = os.path.join(BASE_DIR, "achievements.json")
 highscore = 0
 achievement_scroll_offset = 0
 
@@ -50,34 +53,65 @@ max_boss_player_health = 3
 boss_hearts = []
 
 # ---- LOAD SPRITES ----
-background_img = pygame.image.load("Game/sprites/sand_sprite.jpg").convert()
+background_img = pygame.image.load(
+    os.path.join(BASE_DIR, "sprites", "sand_sprite.jpg")
+).convert()
 background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
 
-cactus_img = pygame.image.load("Game/sprites/cactus_sprite.png").convert_alpha()
+cactus_img = pygame.image.load(
+    os.path.join(BASE_DIR, "sprites", "cactus_sprite.png")
+).convert_alpha()
 cactus_img = pygame.transform.scale(cactus_img, (obstacle_size, obstacle_size))
 
-coin_img = pygame.image.load("Game/sprites/coin_sprite.png").convert_alpha()
+coin_img = pygame.image.load(
+    os.path.join(BASE_DIR, "sprites", "coin_sprite.png")
+).convert_alpha()
 coin_img = pygame.transform.scale(coin_img, (item_size, item_size))
 
-player_sheet = pygame.image.load("Game/sprites/player_walk.png").convert_alpha()
-player_shadow = pygame.image.load("Game/sprites/player_shadow.png").convert_alpha()
+player_sheet = pygame.image.load(
+    os.path.join(BASE_DIR, "sprites", "player_walk.png")
+).convert_alpha()
+
+player_shadow = pygame.image.load(
+    os.path.join(BASE_DIR, "sprites", "player_shadow.png")
+).convert_alpha()
 
 # ---- Load heart sprite (create a simple one if not available) ----
+heart_path = os.path.join(BASE_DIR, "sprites", "heart_sprite.png")
 try:
-    heart_img = pygame.image.load("Game/sprites/heart_sprite.png").convert_alpha()
+    heart_img = pygame.image.load(heart_path).convert_alpha()
     heart_img = pygame.transform.scale(heart_img, (30, 30))
 except:
-    # Create a simple heart sprite
     heart_img = pygame.Surface((30, 30), pygame.SRCALPHA)
-    # Draw a simple heart shape
     pygame.draw.polygon(heart_img, RED, [
-        (15, 5), (20, 10), (25, 5), (20, 15), (15, 25), (10, 15), (5, 5), (10, 10)
+        (15, 5), (20, 10), (25, 5), (20, 15),
+        (15, 25), (10, 15), (5, 5), (10, 10)
     ])
 
 # ---- LOAD SOUNDS ----
-coin_sound = pygame.mixer.Sound("Game/sounds/coin.mp3")
-death_sound = pygame.mixer.Sound("Game/sounds/death.mp3") if os.path.exists("Game/sounds/death.mp3") else None
-bg_music = "Game/sounds/background_song.mp3"
+coin_sound = pygame.mixer.Sound(
+    os.path.join(BASE_DIR, "sounds", "coin.mp3")
+)
+
+death_path = os.path.join(BASE_DIR, "sounds", "death.mp3")
+death_sound = pygame.mixer.Sound(death_path) if os.path.exists(death_path) else None
+
+bg_music = os.path.join(BASE_DIR, "sounds", "background_song.mp3")
+
+# ---- BACKGROUND MUSIC ----
+pygame.mixer.music.load(bg_music)
+pygame.mixer.music.set_volume(0.5)
+pygame.mixer.music.play(-1)
+
+# ---- BOSS SPRITE LOADING ----
+boss_sprite_path = os.path.join(BASE_DIR, "sprites", "boss_sprite.png")
+try:
+    boss_idle_sheet = pygame.image.load(boss_sprite_path).convert_alpha()
+    print(f"Successfully loaded boss sprite sheet: {boss_idle_sheet.get_width()}x{boss_idle_sheet.get_height()}")
+except Exception as e:
+    boss_idle_sheet = None
+    print(f"Could not load boss sprite sheet: {e}. Using placeholder animation.")
+
 
 # ---- SCREENS ----
 MENU, TIME_SELECT, PLAYING, PAUSED, GAME_OVER, TIME_OVER, NEW_HIGHSCORE, CONTROLS, HIGHSCORES, DIFFICULTY_SELECT, ACHIEVEMENTS = (
@@ -126,15 +160,6 @@ else:
 
 # Track achievement progress
 total_coins_collected = 0
-
-# ---- BOSS SPRITE LOADING ----
-# Load boss idle animation sprite sheet (4 frames, 71x81 each, side by side)
-try:
-    boss_idle_sheet = pygame.image.load("Game/sprites/boss_sprite.png").convert_alpha()
-    print(f"Successfully loaded boss sprite sheet: {boss_idle_sheet.get_width()}x{boss_idle_sheet.get_height()}")
-except Exception as e:
-    boss_idle_sheet = None
-    print(f"Could not load boss sprite sheet: {e}. Using placeholder animation.")
 
 # ---- BOSS ANIMATION SYSTEM ----
 class BossAnimation:
