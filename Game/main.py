@@ -347,7 +347,7 @@ class Boss:
         self.animation.update(state)
         
         # Update collision rect position
-        self.rect.center = (self.x, self.y + self.bob_offset)
+        self.rect.center = (int(self.x), int(self.y + self.bob_offset))
             
         # Update projectiles
         for proj in self.projectiles[:]:
@@ -1436,4 +1436,5 @@ with open(achievements_file, "w") as f:
     json.dump(achievements, f)
 
 pygame.quit()
+
 sys.exit()
