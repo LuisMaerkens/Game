@@ -114,8 +114,8 @@ except Exception as e:
 
 
 # ---- SCREENS ----
-MENU, TIME_SELECT, PLAYING, PAUSED, GAME_OVER, TIME_OVER, NEW_HIGHSCORE, CONTROLS, HIGHSCORES, DIFFICULTY_SELECT, ACHIEVEMENTS = (
-    "menu", "time_select", "playing", "paused", "game_over", "time_over", "new_highscore", "controls", "highscores", "difficulty_select", "achievements"
+MENU, TIME_SELECT, PLAYING, PAUSED, GAME_OVER, TIME_OVER, NEW_HIGHSCORE, CONTROLS, HIGHSCORES, DIFFICULTY_SELECT, ACHIEVEMENTS, TUTORIAL = (
+    "menu", "time_select", "playing", "paused", "game_over", "time_over", "new_highscore", "controls", "highscores", "difficulty_select", "achievements", "tutorial"
 )
 screen = MENU
 
@@ -828,6 +828,10 @@ def draw_pause_menu():
 
 def draw_time_select():
     WIN.fill(GREEN)
+    
+    # Tutorial button at the top
+    tutorial = FONT_SMALL.render("Press T for Tutorial", True, BLACK)
+    WIN.blit(tutorial, (WIDTH//2 - tutorial.get_width()//2, HEIGHT//8))
     title = FONT.render("Choose Game Mode", True, BLACK)
     option1 = FONT.render("1. 1 Minute Time Attack", True, BLACK)
     option2 = FONT.render("2. 2 Minutes Time Attack", True, BLACK)
@@ -1025,6 +1029,68 @@ def draw_game():
     
     pygame.display.update()
 
+def draw_tutorial():
+    WIN.fill((40, 80, 120))
+    
+    # Title
+    title = FONT.render("How to Play", True, WHITE)
+    WIN.blit(title, (WIDTH//2 - title.get_width()//2, HEIGHT//12))
+    
+    # Game modes section
+    y_offset = HEIGHT//5
+    
+    # Time Attack explanation
+    mode_title = FONT.render("Time Attack Modes:", True, YELLOW)
+    WIN.blit(mode_title, (WIDTH//2 - mode_title.get_width()//2, y_offset))
+    y_offset += 40
+    
+    time_desc1 = FONT_SMALL.render("Collect as many coins as possible within the time limit", True, WHITE)
+    WIN.blit(time_desc1, (WIDTH//2 - time_desc1.get_width()//2, y_offset))
+    y_offset += 30
+    
+    time_desc2 = FONT_SMALL.render("Avoid cacti - touching them ends the game!", True, RED)
+    WIN.blit(time_desc2, (WIDTH//2 - time_desc2.get_width()//2, y_offset))
+    y_offset += 30
+    
+    time_desc3 = FONT_SMALL.render("Build combos by collecting coins quickly for bonus points", True, ORANGE)
+    WIN.blit(time_desc3, (WIDTH//2 - time_desc3.get_width()//2, y_offset))
+    y_offset += 50
+    
+    # Endless mode explanation
+    endless_title = FONT.render("Endless Mode:", True, PURPLE)
+    WIN.blit(endless_title, (WIDTH//2 - endless_title.get_width()//2, y_offset))
+    y_offset += 40
+    
+    endless_desc1 = FONT_SMALL.render("Survive as long as possible and reach higher levels", True, WHITE)
+    WIN.blit(endless_desc1, (WIDTH//2 - endless_desc1.get_width()//2, y_offset))
+    y_offset += 30
+    
+    endless_desc2 = FONT_SMALL.render("Every 5 levels, face a powerful BOSS enemy!", True, RED)
+    WIN.blit(endless_desc2, (WIDTH//2 - endless_desc2.get_width()//2, y_offset))
+    y_offset += 30
+    
+    endless_desc3 = FONT_SMALL.render("During boss fights: Collect coins to damage the boss", True, YELLOW)
+    WIN.blit(endless_desc3, (WIDTH//2 - endless_desc3.get_width()//2, y_offset))
+    y_offset += 30
+    
+    endless_desc4 = FONT_SMALL.render("Dodge boss projectiles - you have 3 hearts!", True, GREEN)
+    WIN.blit(endless_desc4, (WIDTH//2 - endless_desc4.get_width()//2, y_offset))
+    y_offset += 30
+    
+    endless_desc5 = FONT_SMALL.render("Collect heart items to restore health during boss battles", True, RED)
+    WIN.blit(endless_desc5, (WIDTH//2 - endless_desc5.get_width()//2, y_offset))
+    y_offset += 50
+    
+    # Controls reminder
+    controls_title = FONT_SMALL.render("Controls: Arrow Keys/WASD to move, CTRL/SPACE for slow mode", True, GRAY)
+    WIN.blit(controls_title, (WIDTH//2 - controls_title.get_width()//2, y_offset))
+    
+    # Back button
+    back = FONT.render("Press BACKSPACE to Return", True, WHITE)
+    WIN.blit(back, (WIDTH//2 - back.get_width()//2, HEIGHT//1.1))
+    
+    pygame.display.update()
+
 def draw_game_over():
     WIN.fill(RED)
     text = FONT.render("Game Over!", True, WHITE)
@@ -1191,6 +1257,8 @@ while running:
         draw_time_select()
         if keys[pygame.K_BACKSPACE]:
             screen = MENU
+        elif keys[pygame.K_t]:
+            screen = TUTORIAL
         elif keys[pygame.K_1]:
             time_limit = 60
             game_mode = "time_attack"
@@ -1206,6 +1274,11 @@ while running:
         elif keys[pygame.K_4]:
             game_mode = "endless"
             screen = PLAYING
+
+    elif screen == TUTORIAL:
+        draw_tutorial()
+        if keys[pygame.K_BACKSPACE]:
+            screen = TIME_SELECT
 
         # ---- LOAD HIGHSCORE and INITIALIZE GAME ----
         if screen == PLAYING:
