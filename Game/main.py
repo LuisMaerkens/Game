@@ -703,7 +703,11 @@ def generate_level(num_items, num_obstacles, player_rect, safe_radius=100):
 
     # obstacles
     safe_margin = 40
-    while len(obstacles) < num_obstacles:
+    max_attempts = 1000  # Prevent infinite loops
+    attempts = 0
+    
+    while len(obstacles) < num_obstacles and attempts < max_attempts:
+        attempts += 1
         x = random.randint(0, WIDTH - obstacle_size)
         y = random.randint(0, HEIGHT - obstacle_size)
         new_obs = pygame.Rect(x, y, obstacle_size, obstacle_size)
@@ -715,11 +719,12 @@ def generate_level(num_items, num_obstacles, player_rect, safe_radius=100):
             safe = False
 
         # check afstand tot items
-        for item in items:
-            item_safe = item.inflate(safe_margin * 2, safe_margin * 2)
-            if new_obs.colliderect(item_safe):
-                safe = False
-                break
+        if safe:
+            for item in items:
+                item_safe = item.inflate(safe_margin * 2, safe_margin * 2)
+                if new_obs.colliderect(item_safe):
+                    safe = False
+                    break
 
         # check afstand tot andere obstakels
         if safe and not any(new_obs.colliderect(o) for o in obstacles):
@@ -740,6 +745,7 @@ game_mode = "time_attack"  # "time_attack" or "endless"
 boss = None
 level_start_time = 0
 obstacles_touched = False  # For perfectionist achievement
+game_initialized = False  # Track if game has been initialized
 
 # ---- ACHIEVEMENT FUNCTIONS ----
 def unlock_achievement(key):
@@ -961,7 +967,6 @@ def draw_game():
 
     # Draw items
     for item in items:
-        # Add a little bobbing animation to coins
         bob_offset = math.sin(time.time() * 5) * 3
         WIN.blit(coin_img, (item.x, item.y + bob_offset))
 
@@ -1030,65 +1035,34 @@ def draw_game():
     pygame.display.update()
 
 def draw_tutorial():
-    WIN.fill((40, 80, 120))
+    WIN.fill(GREEN)
     
-    # Title
-    title = FONT.render("How to Play", True, WHITE)
-    WIN.blit(title, (WIDTH//2 - title.get_width()//2, HEIGHT//12))
-    
-    # Game modes section
-    y_offset = HEIGHT//5
-    
-    # Time Attack explanation
-    mode_title = FONT.render("Time Attack Modes:", True, YELLOW)
-    WIN.blit(mode_title, (WIDTH//2 - mode_title.get_width()//2, y_offset))
-    y_offset += 40
-    
-    time_desc1 = FONT_SMALL.render("Collect as many coins as possible within the time limit", True, WHITE)
-    WIN.blit(time_desc1, (WIDTH//2 - time_desc1.get_width()//2, y_offset))
-    y_offset += 30
-    
+    title = FONT.render("How to Play", True, BLACK)
+    mode_title = FONT.render("Time Attack Modes:", True, BLACK)
+    time_desc1 = FONT_SMALL.render("Collect as many coins as possible within the time limit", True, BLACK)
     time_desc2 = FONT_SMALL.render("Avoid cacti - touching them ends the game!", True, RED)
-    WIN.blit(time_desc2, (WIDTH//2 - time_desc2.get_width()//2, y_offset))
-    y_offset += 30
-    
-    time_desc3 = FONT_SMALL.render("Build combos by collecting coins quickly for bonus points", True, ORANGE)
-    WIN.blit(time_desc3, (WIDTH//2 - time_desc3.get_width()//2, y_offset))
-    y_offset += 50
-    
-    # Endless mode explanation
-    endless_title = FONT.render("Endless Mode:", True, PURPLE)
-    WIN.blit(endless_title, (WIDTH//2 - endless_title.get_width()//2, y_offset))
-    y_offset += 40
-    
-    endless_desc1 = FONT_SMALL.render("Survive as long as possible and reach higher levels", True, WHITE)
-    WIN.blit(endless_desc1, (WIDTH//2 - endless_desc1.get_width()//2, y_offset))
-    y_offset += 30
-    
-    endless_desc2 = FONT_SMALL.render("Every 5 levels, face a powerful BOSS enemy!", True, RED)
-    WIN.blit(endless_desc2, (WIDTH//2 - endless_desc2.get_width()//2, y_offset))
-    y_offset += 30
-    
-    endless_desc3 = FONT_SMALL.render("During boss fights: Collect coins to damage the boss", True, YELLOW)
-    WIN.blit(endless_desc3, (WIDTH//2 - endless_desc3.get_width()//2, y_offset))
-    y_offset += 30
-    
-    endless_desc4 = FONT_SMALL.render("Dodge boss projectiles - you have 3 hearts!", True, GREEN)
-    WIN.blit(endless_desc4, (WIDTH//2 - endless_desc4.get_width()//2, y_offset))
-    y_offset += 30
-    
+    time_desc3 = FONT_SMALL.render("Build combos by collecting coins quickly for bonus points", True, RED)
+    endless_title = FONT.render("Endless Mode:", True, BLACK)
+    endless_desc1 = FONT_SMALL.render("Survive as long as possible and reach higher levels", True, BLACK)
+    endless_desc2 = FONT_SMALL.render("Every 5 levels, face a BOSS enemy!", True, RED)
+    endless_desc3 = FONT_SMALL.render("During boss fights: Collect coins to damage the boss", True, RED)
+    endless_desc4 = FONT_SMALL.render("Dodge boss projectiles - you have 3 hearts!", True, RED)
     endless_desc5 = FONT_SMALL.render("Collect heart items to restore health during boss battles", True, RED)
-    WIN.blit(endless_desc5, (WIDTH//2 - endless_desc5.get_width()//2, y_offset))
-    y_offset += 50
-    
-    # Controls reminder
-    controls_title = FONT_SMALL.render("Controls: Arrow Keys/WASD to move, CTRL/SPACE for slow mode", True, GRAY)
-    WIN.blit(controls_title, (WIDTH//2 - controls_title.get_width()//2, y_offset))
-    
-    # Back button
-    back = FONT.render("Press BACKSPACE to Return", True, WHITE)
+    controls_title = FONT_SMALL.render("Controls: Arrow Keys/WASD to move, CTRL/SPACE for slow mode", True, BLACK)
+    back = FONT.render("Press BACKSPACE to Return", True, BLACK)
+    WIN.blit(title, (WIDTH//2 - title.get_width()//2, HEIGHT//4.5))
+    WIN.blit(mode_title, (WIDTH//2 - mode_title.get_width()//2, HEIGHT//3.5))
+    WIN.blit(time_desc1, (WIDTH//2 - time_desc1.get_width()//2, HEIGHT//3))
+    WIN.blit(time_desc2, (WIDTH//2 - time_desc2.get_width()//2, HEIGHT//2.7))
+    WIN.blit(time_desc3, (WIDTH//2 - time_desc3.get_width()//2, HEIGHT//2.4))
+    WIN.blit(endless_title, (WIDTH//2 - endless_title.get_width()//2, HEIGHT//2))
+    WIN.blit(endless_desc1, (WIDTH//2 - endless_desc1.get_width()//2, HEIGHT//1.8))
+    WIN.blit(endless_desc2, (WIDTH//2 - endless_desc2.get_width()//2, HEIGHT//1.7))
+    WIN.blit(endless_desc3, (WIDTH//2 - endless_desc3.get_width()//2, HEIGHT//1.6))
+    WIN.blit(endless_desc4, (WIDTH//2 - endless_desc4.get_width()//2, HEIGHT//1.5))
+    WIN.blit(endless_desc5, (WIDTH//2 - endless_desc5.get_width()//2, HEIGHT//1.4))
+    WIN.blit(controls_title, (WIDTH//2 - controls_title.get_width()//2, HEIGHT//1.2))
     WIN.blit(back, (WIDTH//2 - back.get_width()//2, HEIGHT//1.1))
-    
     pygame.display.update()
 
 def draw_game_over():
@@ -1201,6 +1175,7 @@ while running:
     player_speed = diff_settings["player_speed"]
     speed = slow_speed if keys[pygame.K_LCTRL] or keys[pygame.K_RCTRL] or keys[pygame.K_SPACE] else player_speed
 
+    # --- SCREEN HANDLING ---
     if screen == MENU:
         draw_menu()
         if keys[pygame.K_SPACE]:
@@ -1263,223 +1238,26 @@ while running:
             time_limit = 60
             game_mode = "time_attack"
             screen = PLAYING
+            game_initialized = False  # ← Dit toevoegen!
         elif keys[pygame.K_2]:
             time_limit = 120
             game_mode = "time_attack"
             screen = PLAYING
+            game_initialized = False  # ← Dit toevoegen!
         elif keys[pygame.K_3]:
             time_limit = 300
             game_mode = "time_attack"
             screen = PLAYING
+            game_initialized = False  # ← Dit toevoegen!
         elif keys[pygame.K_4]:
             game_mode = "endless"
             screen = PLAYING
+            game_initialized = False  # ← Dit toevoegen!
 
     elif screen == TUTORIAL:
         draw_tutorial()
         if keys[pygame.K_BACKSPACE]:
             screen = TIME_SELECT
-
-        # ---- LOAD HIGHSCORE and INITIALIZE GAME ----
-        if screen == PLAYING:
-            if os.path.exists(highscore_file):
-                with open(highscore_file, "r") as f:
-                    data = json.load(f)
-                    # haal highscore op voor de huidige mode
-                    if game_mode == "endless":
-                        highscore = data.get("endless", 0)
-                    else:
-                        highscore = data.get(str(time_limit), 0)
-            else:
-                highscore = 0
-
-            player.x = WIDTH // 2
-            player.y = HEIGHT // 2
-            player.rect.topleft = (player.x, player.y)
-
-            items, obstacles = generate_level(20, 15, player.rect)
-            score = 0
-            combo = 0
-            last_collect_time = 0
-            start_time = time.time()
-            pause_offset = 0
-            level = 1
-            boss = None
-            level_start_time = time.time()
-            obstacles_touched = False
-            particles.clear()
-            boss_player_health = max_boss_player_health
-            boss_hearts.clear()
-
-    elif screen == PLAYING:
-        # Check for pause key (ESC)
-        if keys[pygame.K_ESCAPE] and not esc_key_pressed:
-            esc_key_pressed = True
-            screen = PAUSED
-            pause_start = time.time()
-            pygame.mixer.music.pause()  # Pause music
-        elif not keys[pygame.K_ESCAPE]:
-            esc_key_pressed = False
-
-        # player update
-        player.update(keys, speed)
-        
-        # Update boss if active
-        if boss:
-            boss.update(dt, player.rect)
-            
-            # Spawn coins periodically during boss battle
-            boss.try_spawn_coin(items, player.rect)
-            
-            # Spawn hearts at the start of boss battle if not already spawned
-            if not boss.hearts_spawned:
-                boss.spawn_hearts()
-                boss.hearts_spawned = True
-            
-            # Check boss projectiles collision
-            for proj in boss.projectiles[:]:
-                proj_rect = pygame.Rect(proj[0] - 10, proj[1] - 10, 20, 20)
-                if player.rect.colliderect(proj_rect):
-                    # Remove the projectile
-                    if proj in boss.projectiles:
-                        boss.projectiles.remove(proj)
-                    
-                    # Decrease player health during boss battle
-                    boss_player_health -= 1
-                    
-                    # Visual effect for getting hit
-                    screen_shake = 15
-                    screen_flash = 100
-                    flash_color = RED
-                    create_particles(player.rect.centerx, player.rect.centery, RED, 20)
-                    
-                    # Check if player is dead
-                    if boss_player_health <= 0:
-                        if death_sound:
-                            death_sound.play()
-                        screen = GAME_OVER
-                        break
-
-        # collisions
-        current_time = time.time()
-        collected = [item for item in items if player.rect.colliderect(item)]
-        for c in collected:
-            items.remove(c)
-            coin_sound.play()
-            
-            # Visual effect for collecting coin
-            create_coin_particles(c.x, c.y)
-            screen_shake = 5
-            screen_flash = 30
-            flash_color = YELLOW
-            
-            if current_time - last_collect_time - pause_offset <= combo_time:
-                combo += 1
-            else:
-                combo = 1
-
-            last_collect_time = current_time - pause_offset
-            score += 1 * combo
-            
-            # Update total coins
-            total_coins_collected += 1
-            
-            # If boss is active, damage boss when collecting coins
-            if boss:
-                boss.take_damage(5 * combo)  # Each coin damages boss
-
-        # Check heart collection during boss battle
-        if boss:
-            for heart in boss_hearts[:]:
-                if not heart['collected'] and player.rect.colliderect(heart['rect']):
-                    heart['collected'] = True
-                    boss_player_health = min(max_boss_player_health, boss_player_health + 1)
-                    create_particles(heart['rect'].centerx, heart['rect'].centery, RED, 20)
-                    screen_shake = 3
-                    screen_flash = 50
-                    flash_color = GREEN
-
-        if current_time - last_collect_time - pause_offset > combo_time:
-            combo = 0
-
-        # Check obstacle collision (only if boss is not active)
-        if not boss:
-            for obs in obstacles:
-                if player.rect.colliderect(obs):
-                    obstacles_touched = True
-                    # Visual effect for hitting obstacle
-                    screen_shake = 20
-                    screen_flash = 150
-                    flash_color = RED
-                    create_particles(player.rect.centerx, player.rect.centery, RED, 30)
-                    
-                    if death_sound:
-                        death_sound.play()
-                    screen = GAME_OVER
-                    break
-
-        # Tijd controleren (alleen voor time attack)
-        if game_mode == "time_attack":
-            elapsed = current_time - start_time - pause_offset
-            if elapsed >= time_limit:
-                if score > highscore:
-                    highscore = score
-                    if os.path.exists(highscore_file):
-                        with open(highscore_file, "r") as f:
-                            data = json.load(f)
-                    else:
-                        data = {}
-                    data[str(time_limit)] = highscore  # update alleen huidige time_limit
-                    with open(highscore_file, "w") as f:
-                        json.dump(data, f)
-                    screen = NEW_HIGHSCORE
-                else:
-                    screen = TIME_OVER
-
-        # Level up
-        if not items and not boss:
-            level += 1
-            level_start_time = time.time()
-            obstacles_touched = False
-            
-            # Check for boss level (every 5 levels in endless mode)
-            if game_mode == "endless" and level % 5 == 0:
-                boss = Boss()
-                # Reset player health for boss battle
-                boss_player_health = max_boss_player_health
-                # Clear all obstacles during boss battle
-                obstacles.clear()
-                # Clear existing coins
-                items.clear()
-                # Clear hearts
-                boss_hearts.clear()
-                # Unlock boss slayer achievement
-                unlock_achievement("boss_slayer")
-            else:
-                new_obstacles = 15 + random.randint(0, 5) + level
-                items, obstacles = generate_level(20, new_obstacles, player.rect, safe_radius=150)
-        
-        # Check if boss is defeated
-        if boss and boss.hp <= 0:
-            # Boss defeated visual effect
-            create_particles(boss.x, boss.y, PURPLE, 50)
-            create_particles(boss.x, boss.y, YELLOW, 30)
-            screen_shake = 25
-            screen_flash = 200
-            flash_color = PURPLE
-            
-            boss = None
-            boss_hearts.clear()  # Clear any remaining hearts
-            # Generate next level after boss
-            new_obstacles = 15 + random.randint(0, 5) + level
-            items, obstacles = generate_level(20, new_obstacles, player.rect, safe_radius=150)
-            # Add bonus score for defeating boss
-            score += 100 * combo
-
-        # Check achievements
-        check_achievements()
-
-        draw_game()
 
     elif screen == PAUSED:
         draw_pause_menu()
@@ -1529,10 +1307,228 @@ while running:
         if keys[pygame.K_SPACE]:
             screen = MENU
 
+    # --- PLAYING SCREEN ---
+    elif screen == PLAYING:
+        # Game initialization when first entering PLAYING
+        if not game_initialized:
+            game_initialized = True
+            
+            if os.path.exists(highscore_file):
+                with open(highscore_file, "r") as f:
+                    data = json.load(f)
+                    if game_mode == "endless":
+                        highscore = data.get("endless", 0)
+                    else:
+                        highscore = data.get(str(time_limit), 0)
+            else:
+                highscore = 0
+
+            player.x = WIDTH // 2
+            player.y = HEIGHT // 2
+            player.rect.topleft = (player.x, player.y)
+
+            items, obstacles = generate_level(20, 15, player.rect)
+            score = 0
+            combo = 0
+            last_collect_time = 0
+            start_time = time.time()  # ← Dit is cruciaal: starttijd resetten!
+            pause_offset = 0
+            level = 1
+            boss = None
+            level_start_time = time.time()
+            obstacles_touched = False
+            particles.clear()
+            boss_player_health = max_boss_player_health
+            boss_hearts.clear()
+            
+            print(f"Nieuwe game gestart! Tijdslimiet: {time_limit}s, Mode: {game_mode}")  # Debug
+
+        # Check for pause key (ESC) - dit moet binnen PLAYING blijven
+        if keys[pygame.K_ESCAPE] and not esc_key_pressed:
+            esc_key_pressed = True
+            screen = PAUSED
+            pause_start = time.time()
+            pygame.mixer.music.pause()  # Pause music
+        elif not keys[pygame.K_ESCAPE]:
+            esc_key_pressed = False
+
+        # Player update
+        player.update(keys, speed)
+        
+        # Update boss if active
+        if boss:
+            boss.update(dt, player.rect)
+            
+            # Spawn coins periodically during boss battle
+            boss.try_spawn_coin(items, player.rect)
+            
+            # Spawn hearts at the start of boss battle if not already spawned
+            if not boss.hearts_spawned:
+                boss.spawn_hearts()
+                boss.hearts_spawned = True
+            
+            # Check boss projectiles collision
+            for proj in boss.projectiles[:]:
+                proj_rect = pygame.Rect(proj[0] - 10, proj[1] - 10, 20, 20)
+                if player.rect.colliderect(proj_rect):
+                    # Remove the projectile
+                    if proj in boss.projectiles:
+                        boss.projectiles.remove(proj)
+                    
+                    # Decrease player health during boss battle
+                    boss_player_health -= 1
+                    
+                    # Visual effect for getting hit
+                    screen_shake = 15
+                    screen_flash = 100
+                    flash_color = RED
+                    create_particles(player.rect.centerx, player.rect.centery, RED, 20)
+                    
+                    # Check if player is dead
+                    if boss_player_health <= 0:
+                        if death_sound:
+                            death_sound.play()
+                        screen = GAME_OVER
+                        game_initialized = False
+                        break
+
+        # Coin collisions
+        current_time = time.time()
+        collected = [item for item in items if player.rect.colliderect(item)]
+        for c in collected:
+            items.remove(c)
+            coin_sound.play()
+            
+            # Visual effect for collecting coin
+            create_coin_particles(c.x, c.y)
+            screen_shake = 5
+            screen_flash = 30
+            flash_color = YELLOW
+            
+            if current_time - last_collect_time - pause_offset <= combo_time:
+                combo += 1
+            else:
+                combo = 1
+
+            last_collect_time = current_time - pause_offset
+            score += 1 * combo
+            
+            # Update total coins
+            total_coins_collected += 1
+            
+            # If boss is active, damage boss when collecting coins
+            if boss:
+                boss.take_damage(5 * combo)  # Each coin damages boss
+
+        # Check heart collection during boss battle
+        if boss:
+            for heart in boss_hearts[:]:
+                if not heart['collected'] and player.rect.colliderect(heart['rect']):
+                    heart['collected'] = True
+                    boss_player_health = min(max_boss_player_health, boss_player_health + 1)
+                    create_particles(heart['rect'].centerx, heart['rect'].centery, RED, 20)
+                    screen_shake = 3
+                    screen_flash = 50
+                    flash_color = GREEN
+
+        if current_time - last_collect_time - pause_offset > combo_time:
+            combo = 0
+
+        # Check obstacle collision (only if boss is not active)
+        game_over_triggered = False
+        if not boss:
+            for obs in obstacles:
+                if player.rect.colliderect(obs):
+                    obstacles_touched = True
+                    # Visual effect for hitting obstacle
+                    screen_shake = 20
+                    screen_flash = 150
+                    flash_color = RED
+                    create_particles(player.rect.centerx, player.rect.centery, RED, 30)
+                    
+                    if death_sound:
+                        death_sound.play()
+                    game_over_triggered = True
+                    screen = GAME_OVER
+                    game_initialized = False
+                    break
+        
+        # Als game over getriggerd is, teken dan nog één keer het spel en ga dan verder
+        if game_over_triggered:
+            draw_game()  # Teken de visuele effecten
+            continue  # Ga naar volgende frame (die dan GAME_OVER tekent)
+
+        # Time check (only for time attack)
+        if game_mode == "time_attack":
+            elapsed = current_time - start_time - pause_offset
+            if elapsed >= time_limit:
+                if score > highscore:
+                    highscore = score
+                    if os.path.exists(highscore_file):
+                        with open(highscore_file, "r") as f:
+                            data = json.load(f)
+                    else:
+                        data = {}
+                    data[str(time_limit)] = highscore  # update alleen huidige time_limit
+                    with open(highscore_file, "w") as f:
+                        json.dump(data, f)
+                    screen = NEW_HIGHSCORE
+                else:
+                    screen = TIME_OVER
+                game_initialized = False  # ← Dit toevoegen!
+                continue  # Stop verdere verwerking deze frame
+
+        # Level up
+        if not items and not boss:
+            level += 1
+            level_start_time = time.time()
+            obstacles_touched = False
+            
+            # Check for boss level (every 5 levels in endless mode)
+            if game_mode == "endless" and level % 5 == 0:
+                boss = Boss()
+                # Reset player health for boss battle
+                boss_player_health = max_boss_player_health
+                # Clear all obstacles during boss battle
+                obstacles.clear()
+                # Clear existing coins
+                items.clear()
+                # Clear hearts
+                boss_hearts.clear()
+                # Unlock boss slayer achievement
+                unlock_achievement("boss_slayer")
+            else:
+                new_obstacles = 15 + random.randint(0, 5) + level
+                items, obstacles = generate_level(20, new_obstacles, player.rect, safe_radius=150)
+        
+        # Check if boss is defeated
+        if boss and boss.hp <= 0:
+            # Boss defeated visual effect
+            create_particles(boss.x, boss.y, PURPLE, 50)
+            create_particles(boss.x, boss.y, YELLOW, 30)
+            screen_shake = 25
+            screen_flash = 200
+            flash_color = PURPLE
+            
+            boss = None
+            boss_hearts.clear()  # Clear any remaining hearts
+            # Generate next level after boss
+            new_obstacles = 15 + random.randint(0, 5) + level
+            items, obstacles = generate_level(20, new_obstacles, player.rect, safe_radius=150)
+            # Add bonus score for defeating boss
+            score += 100 * combo
+
+        # Check achievements
+        check_achievements()
+        
+        draw_game()
+
+    else:
+        game_initialized = False
+
 # Save achievements before quitting
 with open(achievements_file, "w") as f:
     json.dump(achievements, f)
 
 pygame.quit()
-
 sys.exit()
